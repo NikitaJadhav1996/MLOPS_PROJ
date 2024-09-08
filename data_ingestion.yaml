@@ -1,0 +1,37 @@
+name: Ingest data component
+inputs:
+- {name: data_path, type: String}
+outputs:
+- {name: output_artifact, type: Artifact}
+implementation:
+  container:
+    image: python:3.9-slim
+    command:
+    - sh
+    - -c
+    - |2
+
+      if ! [ -x "$(command -v pip)" ]; then
+          python3 -m ensurepip || python3 -m ensurepip --user || apt-get install python3-pip
+      fi
+
+      PIP_DISABLE_PIP_VERSION_CHECK=1 python3 -m pip install --quiet     --no-warn-script-location 'pandas' 'google-cloud-storage' 'requests' 'boto3' 'kfp==1.8.13' && "$0" "$@"
+    - sh
+    - -ec
+    - |
+      program_path=$(mktemp -d)
+      printf "%s" "$0" > "$program_path/ephemeral_component.py"
+      python3 -m kfp.v2.components.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+    - "\nimport kfp\nfrom kfp.v2 import dsl\nfrom kfp.v2.dsl import *\nfrom typing\
+      \ import *\n\ndef ingest_data_component(data_path:str, output_artifact:Output[Artifact]):#url:str,db_conn_string:str,csv_file_name:str,\
+      \ \n    DI=Data_Ingestion(data_path)\n    data=DI.sleep_data_ingest()\n    output_artifact.metadata['csv_data']=data_path\n\
+      \    if data is not None:\n        output_artifact.metadata['ingested_rows']=len(data)\n\
+      \    else:\n        output_artifact.metadata['ingested_rows']=0\n\n    # \n\
+      \    # DI=Data_Ingestion(url,db_conn_string)\n    # data=DI.data_combine()\n\
+      \    # data.to_csv(csv_file_name)\n    # output_artifact.metadata['csv_file_name']=csv_file_name\n\
+      \n"
+    args:
+    - --executor_input
+    - {executorInput: null}
+    - --function_to_execute
+    - ingest_data_component

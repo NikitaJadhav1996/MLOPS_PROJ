@@ -1,0 +1,18 @@
+{
+  "data_source":"data_given/Sleep_health.csv",
+  
+  "load_raw_dataset": "data/raw/Sleep_health.csv",
+
+  "train_path": "data/processed/train_Sleep_health.csv",
+
+  "test_path": "data/processed/test_Sleep_health.csv",
+
+  "test_size": "0.2",
+
+  "PIPELINE_ROOT":"C:/Users/Nikita/MLOPS_PROJ",
+
+  "PIPELINE_JSON": "mlops_pipeline.json",
+
+  "REGION": "us-central-1"
+
+}

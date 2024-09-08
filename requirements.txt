@@ -1,0 +1,5 @@
+pandas==1.5.3
+sqlalchemy==1.4.47
+boto3==1.26.6
+requests==2.31.0
+kfp==1.8.14

@@ -1,0 +1,92 @@
+{
+  "pipelineSpec": {
+    "components": {
+      "comp-ingest-data-component": {
+        "executorLabel": "exec-ingest-data-component",
+        "inputDefinitions": {
+          "parameters": {
+            "data_path": {
+              "type": "STRING"
+            }
+          }
+        },
+        "outputDefinitions": {
+          "artifacts": {
+            "output_artifact": {
+              "artifactType": {
+                "schemaTitle": "system.Artifact",
+                "schemaVersion": "0.0.1"
+              }
+            }
+          }
+        }
+      }
+    },
+    "deploymentSpec": {
+      "executors": {
+        "exec-ingest-data-component": {
+          "container": {
+            "args": [
+              "--executor_input",
+              "{{$}}",
+              "--function_to_execute",
+              "ingest_data_component"
+            ],
+            "command": [
+              "sh",
+              "-c",
+              "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip || python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1 python3 -m pip install --quiet     --no-warn-script-location 'pandas' 'google-cloud-storage' 'requests' 'boto3' 'kfp==1.8.13' && \"$0\" \"$@\"\n",
+              "sh",
+              "-ec",
+              "program_path=$(mktemp -d)\nprintf \"%s\" \"$0\" > \"$program_path/ephemeral_component.py\"\npython3 -m kfp.v2.components.executor_main                         --component_module_path                         \"$program_path/ephemeral_component.py\"                         \"$@\"\n",
+              "\nimport kfp\nfrom kfp.v2 import dsl\nfrom kfp.v2.dsl import *\nfrom typing import *\n\ndef ingest_data_component(data_path:str, output_artifact:Output[Artifact]):#url:str,db_conn_string:str,csv_file_name:str, \n    DI=Data_Ingestion(data_path)\n    data=DI.sleep_data_ingest()\n    output_artifact.metadata['csv_data']=data_path\n    if data is not None:\n        output_artifact.metadata['ingested_rows']=len(data)\n    else:\n        output_artifact.metadata['ingested_rows']=0\n\n    # \n    # DI=Data_Ingestion(url,db_conn_string)\n    # data=DI.data_combine()\n    # data.to_csv(csv_file_name)\n    # output_artifact.metadata['csv_file_name']=csv_file_name\n\n"
+            ],
+            "image": "python:3.9-slim"
+          }
+        }
+      }
+    },
+    "pipelineInfo": {
+      "name": "xyz-pipeline"
+    },
+    "root": {
+      "dag": {
+        "tasks": {
+          "ingest-data-component": {
+            "cachingOptions": {},
+            "componentRef": {
+              "name": "comp-ingest-data-component"
+            },
+            "inputs": {
+              "parameters": {
+                "data_path": {
+                  "componentInputParameter": "data_path"
+                }
+              }
+            },
+            "taskInfo": {
+              "name": "ingest-data-component"
+            }
+          }
+        }
+      },
+      "inputDefinitions": {
+        "parameters": {
+          "data_path": {
+            "type": "STRING"
+          }
+        }
+      }
+    },
+    "schemaVersion": "2.0.0",
+    "sdkVersion": "kfp-1.8.13"
+  },
+  "runtimeConfig": {
+    "gcsOutputDirectory": "C:/Users/Nikita/MLOPS_PROJ",
+    "parameters": {
+      "data_path": {
+        "stringValue": "data_given/Sleep_health.csv"
+      }
+    }
+  }
+}
